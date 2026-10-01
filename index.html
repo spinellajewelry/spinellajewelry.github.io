@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinella | Jeweler's</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo" onclick="accesoSecretoMovil()">
+            <img src="image_289add.png" alt="Logo Spinella" class="logo-normal">
+            <span>SPINELLA</span>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="buscador" placeholder="Buscar joya exclusiva...">
+        </div>
+
+        <div class="filters">
+            <button class="btn-filter active" onclick="filtrarCategoria('Todos', this)">Todas</button>
+            <button class="btn-filter" onclick="filtrarCategoria('Anillos', this)">Anillos</button>
+            <button class="btn-filter" onclick="filtrarCategoria('Cadenas', this)">Cadenas</button>
+            <button class="btn-filter" onclick="filtrarCategoria('Pulseras', this)">Pulseras</button>
+            <button class="btn-filter" onclick="filtrarCategoria('Aretes', this)">Aretes</button>
+        </div>
+
+        <div class="wishlist-menu" onclick="abrirWishlist()">
+            🛒 <span id="wishlist-count">0</span>
+        </div>
+    </nav>
+
+    <div class="promotions-carousel">
+        <div class="carousel-wrapper" id="carousel-track"></div>
+        <button class="carousel-control prev-btn" onclick="moverCarrusel(-1)">&#10094;</button>
+        <button class="carousel-control next-btn" onclick="moverCarrusel(1)">&#10095;</button>
+    </div>
+
+    <main class="container">
+        <div class="grid" id="productos-grid"></div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <img src="image_289add.png" alt="Spinella Jewelry" class="footer-logo">
+                <h2 class="footer-title">SPINELLA</h2>
+                <p class="footer-subtitle">jewelry</p>
+                <p class="footer-desc">Elegancia, Calidad y Diseño Único.</p>
+            </div>
+            
+            <div class="footer-info">
+                <h3>Sobre la Joyería</h3>
+                <ul>
+                    <li><a href="javascript:void(0);" onclick="abrirInfoModal('garantia')">Políticas de Garantía</a></li>
+                    <li><a href="javascript:void(0);" onclick="abrirInfoModal('mision')">Misión</a></li>
+                    <li><a href="javascript:void(0);" onclick="abrirInfoModal('vision')">Visión</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-contact">
+                <h3>Nuestros Horarios</h3>
+                <ul class="locations-list">
+                    <li>
+                        <i></i>
+                        <div>
+                            <strong>Lunes - Domingo</strong><br>
+                            8:00 am - 8:00 pm<br>
+                        </div>
+                    </li>
+                    <li>
+                        <i></i>
+                        <div>
+                            <strong></strong><br>
+                            
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="footer-social">
+                <h3>Contacto</h3>
+                <p><i class="fab fa-whatsapp"></i> +57 320 2654167</p>
+                <p><i class="fas fa-envelope"></i> spinellajewelry@gmail.com</p>
+                <!-- NUEVO ENLACE INVISIBLE A INSTAGRAM -->
+                <a href="https://www.instagram.com/spinellajewelry?stkn=NHdud3QxZHI0a3Fu" target="_blank" class="instagram-link">Instagram: @SpinellaJewelry</a><br>
+                <a href="https://www.tiktok.com/@spinella.jewelry?_r=1&_t=ZS-9AB4Oyb7f7c" target="_blank" class="instagram-link">TikTok: @spinella.jewelry</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Spinella Jewelry. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <div id="wishlist-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarWishlist()">&times;</span>
+            <h2 class="luxury-title">Tu Colección Privada</h2>
+            <div id="wishlist-items"></div>
+            <button class="btn-whatsapp" onclick="enviarAWhatsApp()">Solicitar por WhatsApp</button>
+        </div>
+    </div>
+
+    <div id="size-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarSizeModal()">&times;</span>
+            <h2 class="luxury-title">Calculadora de Tallas</h2>
+            <p style="text-align: center; color: var(--color-texto);">Mide la circunferencia de tu dedo en milímetros (mm).</p>
+            <div class="calculator">
+                <input type="number" id="medida-mm" placeholder="Ej: 54">
+                <button onclick="calcularTalla()">Descubrir mi Talla</button>
+                <p id="size-result"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-login-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span class="close-modal" onclick="document.getElementById('admin-login-modal').style.display='none'">&times;</span>
+            <h2 class="luxury-title">Acceso Privado</h2>
+            <input type="password" id="admin-password" placeholder="Contraseña de acceso" style="width: 100%; padding: 10px; margin: 15px 0;">
+            <button onclick="verificarAdmin()" style="width: 100%; padding: 10px; background-color: var(--color-primario); color: var(--color-claro); border: none;">Entrar</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE INFORMACIÓN LUJOSO -->
+    <div id="info-modal" class="modal">
+        <div class="modal-content info-modal-lujoso">
+            <span class="close-modal close-modal-lujoso" onclick="cerrarInfoModal()">&times;</span>
+            
+            <!-- Encabezado decorativo usando tu imagen -->
+            <div class="info-modal-header"></div>
+            
+            <div class="info-modal-text-area">
+                <h2 id="info-modal-title" class="luxury-title">Título</h2>
+                
+                <!-- Área de texto con scroll para mensajes largos -->
+                <div id="info-modal-body" class="info-modal-body-scroll">
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TEXTOS OCULTOS (Edita esto con tu información) -->
+            <!-- ========================================== -->
+            <div id="contenido-garantia" style="display: none;">
+                <p>En nuestra marca respaldamos la calidad y durabilidad de cada una de nuestras piezas. Nuestra garantía cubre exclusivamente desgaste natural derivado del uso adecuado de la prenda.<br>
+<br>1. Cobertura según el valor del producto<br>
+ * Productos de hasta $50: Garantía de 3 meses a partir de la fecha de compra.<br>
+ * Productos entre $50.01 y $150: Garantía de 6 meses a partir de la fecha de compra.<br>
+ * Productos de $151.01 en adelante: Garantía de 1 año a partir de la fecha de compra.<br>
+<br>2. Términos y Condiciones del Reembolso<br>
+ * Tipo de compensación: Si la prenda presenta un fallo o deterioro por desgaste dentro del período aplicable, se procederá al reembolso total del valor pagado por el producto.<br>
+ * Causal única de cobertura: La garantía aplica únicamente por desgaste natural del material.<br>
+<br>3. Exclusiones de la Garantía<br>
+La garantía no aplica bajo las siguientes circunstancias:<br>
+ * Pérdida o extravío de la pieza o sus componentes.<br>
+ * Robo o hurto.<br>
+ * Daños causados por mal uso, accidentes, negligencia, contacto con químicos agresivos o modificaciones de terceros.<br></p>
+            </div>
+            
+            <div id="contenido-mision" style="display: none;">
+                <p>Ofrecer colecciones de joyería fina que transformen el estilo cotidiano en una declaración de elegancia atemporal, brindando a través de cada detalle una experiencia de sofisticación y lujo accesible.</p>
+            </div>
+            
+            <div id="contenido-vision" style="display: none;">
+                <p>Ser la marca de referencia para quienes buscan joyería con un diseño impecable y sofisticado, reconocida por transformar la experiencia de adquisición en un símbolo de distinción y exclusividad.</p>
+            </div>
+            <!-- ========================================== -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
