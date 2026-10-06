@@ -465,3 +465,10 @@ body {
     background: var(--color-primario);
     border-radius: 10px;
 }
+
+/* ==========================================
+   ESTILOS NUEVOS: ESTADÍSTICAS Y BOTONES ADMIN
+   ========================================== */
+.top-ventas-list { list-style: none; padding: 0; margin: 0; }
+.grafico-container { padding: 10px 0; }
+.btn-action { margin-right: 5px; margin-bottom: 5px; font-family: var(--fuente-general); font-size: 13px; }

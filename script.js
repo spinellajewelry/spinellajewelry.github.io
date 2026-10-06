@@ -10,13 +10,12 @@ const firebaseConfig = {
     appId: "1:664464145046:web:c7b0954c13890f8ccb60b7"
 };
 
-// PREVENCIÓN DE ERRORES: Intentamos inicializar Firebase, si falla por falta de llaves, no rompe la web
 let db;
 try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
 } catch (error) {
-    console.warn("Aviso: Firebase no configurado correctamente todavía. Reemplaza las variables en script.js.");
+    console.warn("Aviso: Firebase no configurado correctamente todavía.");
 }
 
 let inventario = []; 
@@ -27,7 +26,7 @@ window.onload = function() {
 };
 
 function cargarInventario() {
-    if(!db) return; // Si Firebase falló, detenemos la carga pero no rompemos la web
+    if(!db) return; 
     db.ref('productos').on('value', (snapshot) => {
         inventario = [];
         snapshot.forEach((childSnapshot) => {
@@ -39,6 +38,7 @@ function cargarInventario() {
         renderizarProductos(inventario);
         actualizarCarrusel();
         renderizarTablaAdmin();
+        if(typeof renderizarEstadisticas === "function") renderizarEstadisticas();
     });
 }
 
@@ -50,12 +50,28 @@ function renderizarProductos(productos) {
     productos.forEach(prod => {
         const div = document.createElement('div');
         div.className = 'product-card';
+        
+        const btnCarrito = prod.agotado 
+            ? `<button class="btn-add" style="background:#888; cursor:not-allowed;" disabled>Agotado</button>`
+            : `<button class="btn-add" onclick="agregarAlCarrito('${prod.id}')">Agregar a Wishlist</button>`;
+            
+        const badgeAgotado = prod.agotado 
+            ? `<div style="position:absolute; top:10px; right:10px; background:#8c1c13; color:white; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:12px; z-index:10; letter-spacing: 1px;">AGOTADO</div>` 
+            : '';
+
+        // Definimos qué imagen abrir: La ficha técnica, o la normal si no subiste ficha.
+        const imgFicha = prod.imagenFicha ? prod.imagenFicha : prod.imagen;
+
+        // La foto ahora tiene 'cursor: zoom-in' y responde al clic para abrir detalles
         div.innerHTML = `
-            <img src="${prod.imagen}" alt="${prod.nombre}">
+            <div style="position:relative; cursor: zoom-in;" onclick="abrirDetalles('${imgFicha}')" title="Toca para ver características">
+                ${badgeAgotado}
+                <img src="${prod.imagen}" alt="${prod.nombre}" style="${prod.agotado ? 'filter: grayscale(100%); opacity: 0.6;' : ''}">
+            </div>
             <h3 class="product-title">${prod.nombre}</h3>
             <p class="product-desc">${prod.descripcion}</p>
             <p class="product-price">$${prod.precio}</p>
-            <button class="btn-add" onclick="agregarAlCarrito('${prod.id}')">Agregar a Wishlist</button>
+            ${btnCarrito}
             ${prod.categoria === 'Anillos' ? `<button class="btn-talla" onclick="abrirSizeModal()">¿No sabes tu talla?</button>` : ''}
         `;
         grid.appendChild(div);
@@ -71,7 +87,6 @@ document.getElementById('buscador')?.addEventListener('input', (e) => {
     renderizarProductos(filtrados);
 });
 
-// CORRECCIÓN DEL FILTRO: Se agregó 'btnElement' para evitar el error de variable indefinida
 function filtrarCategoria(categoria, btnElement) {
     const botones = document.querySelectorAll('.btn-filter');
     botones.forEach(btn => btn.classList.remove('active'));
@@ -89,6 +104,7 @@ function agregarAlCarrito(id) {
     const producto = inventario.find(p => p.id === id);
     carrito.push(producto);
     document.getElementById('wishlist-count').innerText = carrito.length;
+    alert(`${producto.nombre} agregado a tu colección privada.`);
 }
 
 function abrirWishlist() {
@@ -135,6 +151,9 @@ function enviarAWhatsApp() {
     carrito.forEach(prod => {
         mensaje += `- ${prod.nombre} ($${prod.precio})%0A`;
         total += Number(prod.precio);
+        
+        const ventasActuales = prod.compras || 0;
+        db.ref('productos/' + prod.id).update({ compras: ventasActuales + 1 });
     });
     
     mensaje += `%0ATotal estimado: $${total}`;
@@ -142,43 +161,39 @@ function enviarAWhatsApp() {
     const numeroTelefono = "584120000000"; 
     const url = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     window.open(url, '_blank');
+
+    carrito = [];
+    document.getElementById('wishlist-count').innerText = 0;
+    cerrarWishlist();
 }
 
 function abrirSizeModal() { document.getElementById('size-modal').style.display = 'block'; }
 function cerrarSizeModal() { document.getElementById('size-modal').style.display = 'none'; }
 
 function calcularTalla() {
-    // Parseamos el valor a decimal para leer los milímetros con precisión
     const mm = parseFloat(document.getElementById('medida-mm').value);
     const resultado = document.getElementById('size-result');
     
-    // Buscamos o creamos un contenedor para la nota de recomendación
     let notaDiv = document.getElementById('size-note');
     if (!notaDiv) {
         notaDiv = document.createElement('p');
         notaDiv.id = 'size-note';
         notaDiv.style.fontSize = '14px';
-        notaDiv.style.color = '#8c1c13'; // Color rojo oscuro para destacar
+        notaDiv.style.color = '#8c1c13'; 
         notaDiv.style.marginTop = '10px';
         notaDiv.style.fontWeight = 'bold';
         resultado.parentNode.appendChild(notaDiv);
     }
-    
-    // Limpiamos la nota anterior cada vez que se presiona el botón
     notaDiv.innerText = "";
 
-    // Validamos el nuevo rango estadounidense (44.0 a 67.8)
     if (!mm || mm < 44.0 || mm > 67.8) {
         resultado.innerText = "Ingresa una medida válida (ej: 48.5).";
         resultado.style.color = "#8c1c13";
         return;
     }
     
-    let talla = "Desconocida";
-    let limiteSuperior = 0;
-    let proximaTalla = "";
+    let talla = "Desconocida", limiteSuperior = 0, proximaTalla = "";
 
-    // Nuevas medidas - Tallas Estadounidenses
     if (mm >= 44.0 && mm <= 44.7) { talla = "Talla 3"; limiteSuperior = 44.7; proximaTalla = "Talla 3.5"; }
     else if (mm >= 44.8 && mm <= 46.0) { talla = "Talla 3.5"; limiteSuperior = 46.0; proximaTalla = "Talla 4"; }
     else if (mm >= 46.1 && mm <= 47.3) { talla = "Talla 4"; limiteSuperior = 47.3; proximaTalla = "Talla 4.5"; }
@@ -202,12 +217,10 @@ function calcularTalla() {
     resultado.innerText = talla;
     resultado.style.color = "var(--color-primario)";
 
-    // Lógica para mostrar la nota en los últimos 0.3 milímetros del rango superior
     const umbralNota = parseFloat((limiteSuperior - 0.2).toFixed(1));
-    
     if (talla !== "Desconocida" && proximaTalla !== "Consulta con asesor") {
         if (mm >= umbralNota) {
-            notaDiv.innerText = `💡 Nota: Tu medida (${mm} mm) está en el límite superior. Te recomendamos elegir la ${proximaTalla} para mayor comodidad.`;
+            notaDiv.innerText = `💡 Nota: Tu medida (${mm} mm) está en el límite superior. Te recomendamos elegir la ${proximaTalla}.`;
         }
     }
 }
@@ -220,7 +233,7 @@ function actualizarCarrusel() {
     if(!track) return;
     track.innerHTML = '';
     
-    const destacados = inventario.filter(prod => prod.destacado === true);
+    const destacados = inventario.filter(prod => prod.destacado === true && !prod.agotado); 
     
     if(destacados.length === 0) {
         document.querySelector('.promotions-carousel').style.display = 'none';
@@ -240,7 +253,6 @@ function actualizarCarrusel() {
             </div>
         `;
     });
-    
     iniciarAutoPlay();
 }
 
@@ -253,14 +265,10 @@ function moverCarrusel(direccion) {
     const itemsPorVista = window.innerWidth <= 768 ? 1 : 3;
     
     if (totalItems <= itemsPorVista) return; 
-    
     carruselIndex += direccion;
     
-    if (carruselIndex > totalItems - itemsPorVista) {
-        carruselIndex = 0;
-    } else if (carruselIndex < 0) {
-        carruselIndex = totalItems - itemsPorVista;
-    }
+    if (carruselIndex > totalItems - itemsPorVista) { carruselIndex = 0; } 
+    else if (carruselIndex < 0) { carruselIndex = totalItems - itemsPorVista; }
 
     const itemWidth = items[0].offsetWidth + 20; 
     track.style.transform = `translateX(-${carruselIndex * itemWidth}px)`;
@@ -271,10 +279,8 @@ function iniciarAutoPlay() { autoPlayInterval = setInterval(() => moverCarrusel(
 function reiniciarAutoPlay() { clearInterval(autoPlayInterval); iniciarAutoPlay(); }
 
 // ==========================================
-// ACCESO SECRETO (ACTUALIZADO)
+// ACCESO SECRETO ADMIN
 // ==========================================
-
-// Para PC: Ctrl + Shift + Q (Se cambió la J por la Q para evitar conflictos con el navegador)
 document.addEventListener('keydown', function(event) {
     if (event.ctrlKey && event.shiftKey && event.key === 'Q') {
         document.getElementById('admin-login-modal').style.display = 'block';
@@ -286,9 +292,7 @@ let temporizadorToques;
 
 function accesoSecretoMovil() {
     contadorToques++;
-    if (contadorToques === 1) {
-        temporizadorToques = setTimeout(() => { contadorToques = 0; }, 2000);
-    }
+    if (contadorToques === 1) { temporizadorToques = setTimeout(() => { contadorToques = 0; }, 2000); }
     if (contadorToques === 5) {
         clearTimeout(temporizadorToques);
         contadorToques = 0;
@@ -300,7 +304,6 @@ function verificarAdmin() {
     const pass = document.getElementById('admin-password').value;
     if (pass === "spinella2026") {
         document.getElementById('admin-login-modal').style.display = 'none';
-        
         document.querySelector('.navbar').style.display = 'none';
         document.querySelector('.promotions-carousel').style.display = 'none';
         document.querySelector('.container').style.display = 'none';
@@ -310,10 +313,8 @@ function verificarAdmin() {
             crearPanelAdmin();
         }
         document.getElementById('admin-view-container').style.display = 'block';
-        
-        // CORRECCIÓN: Renderizar la tabla justo después de crear el panel para que no aparezca vacía
         renderizarTablaAdmin();
-        
+        if(typeof renderizarEstadisticas === "function") renderizarEstadisticas();
     } else {
         alert("Contraseña incorrecta.");
     }
@@ -337,18 +338,20 @@ function crearPanelAdmin() {
                     <span>SPINELLA</span>
                 </div>
                 <ul class="sidebar-menu">
-                    <li><button class="active" onclick="cambiarPestana('nuevo-producto', this)">+ Nuevo Producto</button></li>
+                    <li><button class="active" onclick="cambiarPestana('nuevo-producto', this)">+ Formulario Joya</button></li>
                     <li><button onclick="cambiarPestana('inventario-lista', this)">📦 Ver Inventario</button></li>
+                    <li><button onclick="cambiarPestana('estadisticas-avanzadas', this)">📊 Estadísticas</button></li>
                     <li><button onclick="salirAdmin()" style="color: #FFF0DD; margin-top: 20px;">← Volver a Tienda</button></li>
                 </ul>
             </aside>
             <main class="dashboard-content">
                 <section id="nuevo-producto" class="admin-section active">
                     <div class="admin-header">
-                        <h2>Agregar Nueva Joya</h2>
+                        <h2 id="titulo-form-producto">Agregar Nueva Joya</h2>
                     </div>
                     <div class="admin-card">
                         <form id="form-producto" onsubmit="guardarProducto(event)">
+                            <input type="hidden" id="prod-id" value="">
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Nombre de la Pieza</label>
@@ -365,7 +368,7 @@ function crearPanelAdmin() {
                                 </div>
                                 <div class="form-group">
                                     <label>Precio (USD)</label>
-                                    <input type="number" id="prod-precio" required>
+                                    <input type="number" id="prod-precio" step="0.01" required>
                                 </div>
                                 <div class="form-group">
                                     <label>¿Destacar en Carrusel?</label>
@@ -379,23 +382,48 @@ function crearPanelAdmin() {
                                 <label>Descripción breve</label>
                                 <textarea id="prod-desc" rows="2" required></textarea>
                             </div>
-                            <div class="form-group" style="margin-bottom: 20px;">
-                                <label>Imagen del Producto</label>
-                                <input type="file" id="prod-img" accept="image/*" required>
+                            
+                            <!-- AQUÍ AÑADIMOS EL CAMPO PARA LA IMAGEN DE CARACTERÍSTICAS -->
+                            <div class="form-grid">
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label>Imagen Principal (La que se ve en la tienda)</label>
+                                    <input type="file" id="prod-img" accept="image/*">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label>Ficha Técnica (Imagen con detalles)</label>
+                                    <input type="file" id="prod-img-ficha" accept="image/*">
+                                    <small style="color: var(--color-secundario-2); margin-top: 5px;">Opcional. Formato vertical 1080x1920 px recomendado.</small>
+                                </div>
                             </div>
-                            <button type="submit" class="btn-submit" id="btn-guardar-prod">Guardar Producto en Base de Datos</button>
+                            
+                            <button type="submit" class="btn-submit" id="btn-guardar-prod">Guardar en Base de Datos</button>
                         </form>
                     </div>
                 </section>
+                
                 <section id="inventario-lista" class="admin-section">
                     <div class="admin-header"><h2>Inventario Actual</h2></div>
-                    <div class="admin-card">
+                    <div class="admin-card" style="overflow-x:auto;">
                         <table class="admin-table">
                             <thead>
-                                <tr><th>Imagen</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Acciones</th></tr>
+                                <tr><th>Imagen</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr>
                             </thead>
                             <tbody id="tabla-inventario-body"></tbody>
                         </table>
+                    </div>
+                </section>
+
+                <section id="estadisticas-avanzadas" class="admin-section">
+                    <div class="admin-header"><h2>Análisis de Ventas</h2></div>
+                    <div class="form-grid">
+                        <div class="admin-card">
+                            <h3 style="color: var(--color-primario); margin-bottom: 15px;">Joyas Más Vendidas</h3>
+                            <ul id="lista-top-ventas" class="top-ventas-list"></ul>
+                        </div>
+                        <div class="admin-card">
+                            <h3 style="color: var(--color-primario); margin-bottom: 15px;">Demanda por Categoría</h3>
+                            <div id="grafico-categorias" class="grafico-container"></div>
+                        </div>
                     </div>
                 </section>
             </main>
@@ -414,60 +442,73 @@ function cambiarPestana(idSeccion, boton) {
 
 async function guardarProducto(e) {
     e.preventDefault();
-    if(!db) {
-        alert("Error: Firebase no está configurado. No se puede guardar.");
-        return;
-    }
+    if(!db) { alert("Error: Firebase no está configurado."); return; }
     
+    const idEdicion = document.getElementById('prod-id').value;
     const archivoImg = document.getElementById('prod-img').files[0];
+    const archivoFicha = document.getElementById('prod-img-ficha').files[0];
     
-    // CORRECCIÓN: Validación por si no se selecciona archivo
-    if(!archivoImg) {
-        alert("Por favor selecciona una imagen para el producto.");
+    if(!idEdicion && !archivoImg) {
+        alert("Por favor selecciona la Imagen Principal para el nuevo producto.");
         return;
     }
 
     const btnSubmit = document.getElementById('btn-guardar-prod');
-    btnSubmit.innerText = "Subiendo imagen... Por favor espera.";
+    btnSubmit.innerText = "Procesando... Por favor espera.";
     btnSubmit.disabled = true;
 
-    const nombre = document.getElementById('prod-nombre').value;
-    const categoria = document.getElementById('prod-categoria').value;
-    const precio = document.getElementById('prod-precio').value;
-    const desc = document.getElementById('prod-desc').value;
-    const destacado = document.getElementById('prod-destacado').value === 'si';
-
     try {
-        const formData = new FormData();
-        formData.append('image', archivoImg);
-
-        const responseImg = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-            method: 'POST',
-            body: formData
-        });
+        let urlImagen = "";
+        let urlFicha = "";
         
-        const dataImg = await responseImg.json();
-        const urlImagen = dataImg.data.url;
+        // Subimos la imagen principal si hay una nueva
+        if (archivoImg) {
+            const formData = new FormData();
+            formData.append('image', archivoImg);
+            const responseImg = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
+            const dataImg = await responseImg.json();
+            urlImagen = dataImg.data.url;
+        }
 
-        const nuevoProducto = {
-            nombre: nombre,
-            categoria: categoria,
-            precio: precio,
-            descripcion: desc,
-            imagen: urlImagen,
-            destacado: destacado
+        // Subimos la imagen de detalles/ficha si se adjuntó
+        if (archivoFicha) {
+            const formDataFicha = new FormData();
+            formDataFicha.append('image', archivoFicha);
+            const responseFicha = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formDataFicha });
+            const dataFicha = await responseFicha.json();
+            urlFicha = dataFicha.data.url;
+        }
+
+        const productoData = {
+            nombre: document.getElementById('prod-nombre').value,
+            categoria: document.getElementById('prod-categoria').value,
+            precio: document.getElementById('prod-precio').value,
+            descripcion: document.getElementById('prod-desc').value,
+            destacado: document.getElementById('prod-destacado').value === 'si'
         };
 
-        await db.ref('productos').push(nuevoProducto);
+        if (urlImagen !== "") { productoData.imagen = urlImagen; }
+        if (urlFicha !== "") { productoData.imagenFicha = urlFicha; }
 
-        alert("¡Producto guardado con éxito!");
+        if (idEdicion) {
+            await db.ref('productos/' + idEdicion).update(productoData);
+            alert("¡Producto editado exitosamente!");
+        } else {
+            productoData.compras = 0;
+            productoData.agotado = false;
+            await db.ref('productos').push(productoData);
+            alert("¡Producto nuevo guardado!");
+        }
+
         document.getElementById('form-producto').reset();
+        document.getElementById('prod-id').value = "";
+        document.getElementById('titulo-form-producto').innerText = "Agregar Nueva Joya";
 
     } catch (error) {
         console.error(error);
-        alert("Hubo un error al guardar el producto.");
+        alert("Hubo un error al procesar el producto.");
     } finally {
-        btnSubmit.innerText = "Guardar Producto en Base de Datos";
+        btnSubmit.innerText = "Guardar en Base de Datos";
         btnSubmit.disabled = false;
     }
 }
@@ -477,30 +518,107 @@ function renderizarTablaAdmin() {
     if(!tbody) return; 
     tbody.innerHTML = '';
     inventario.forEach(prod => {
+        const txtEstado = prod.agotado ? '<span style="color:#8c1c13; font-weight:bold;">Agotado</span>' : '<span style="color:green;">Disponible</span>';
+        const txtBotonAgotado = prod.agotado ? '✅ Stock Activo' : '🚫 Agotar';
+
         tbody.innerHTML += `
-            <tr>
-                <td><img src="${prod.imagen}" alt="${prod.nombre}"></td>
+            <tr style="${prod.agotado ? 'opacity:0.6;' : ''}">
+                <td><img src="${prod.imagen}" alt="${prod.nombre}" style="width:40px; height:40px; object-fit:cover; border-radius:5px;"></td>
                 <td style="font-family: var(--fuente-general); font-weight: bold;">${prod.nombre}</td>
                 <td>${prod.categoria}</td>
                 <td>$${prod.precio}</td>
-                <td><button class="btn-action btn-delete" onclick="eliminarProductoBD('${prod.id}')">Eliminar</button></td>
+                <td>${txtEstado}</td>
+                <td style="display:flex;">
+                    <button class="btn-action" style="background:var(--color-secundario-2); color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="editarProductoBD('${prod.id}')">✏️ Editar</button>
+                    <button class="btn-action" style="background:#e67e22; color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="marcarAgotadoBD('${prod.id}', ${prod.agotado || false})">${txtBotonAgotado}</button>
+                    <button class="btn-action btn-delete" style="padding:5px 8px; border-radius:3px;" onclick="eliminarProductoBD('${prod.id}')">🗑️ Eliminar</button>
+                </td>
             </tr>
         `;
     });
 }
 
+function editarProductoBD(id) {
+    const prod = inventario.find(p => p.id === id);
+    if(!prod) return;
+    
+    document.getElementById('prod-id').value = prod.id;
+    document.getElementById('prod-nombre').value = prod.nombre;
+    document.getElementById('prod-categoria').value = prod.categoria;
+    document.getElementById('prod-precio').value = prod.precio;
+    document.getElementById('prod-desc').value = prod.descripcion;
+    document.getElementById('prod-destacado').value = prod.destacado ? 'si' : 'no';
+    
+    document.getElementById('titulo-form-producto').innerText = "✏️ Editando: " + prod.nombre;
+    cambiarPestana('nuevo-producto', document.querySelector('.sidebar-menu button'));
+}
+
+function marcarAgotadoBD(id, estadoActual) {
+    db.ref('productos/' + id).update({ agotado: !estadoActual });
+}
+
 function eliminarProductoBD(id) {
-    if(confirm("¿Estás seguro de que deseas eliminar este producto de la base de datos?")) {
+    if(confirm("¿Estás seguro de que deseas eliminar permanentemente este producto?")) {
         db.ref('productos/' + id).remove()
         .then(() => alert("Producto eliminado."))
         .catch(err => alert("Error al eliminar: " + err));
     }
 }
 
-// ==========================================
-// VENTANAS DE INFORMACIÓN (Garantía, Misión, Visión)
-// ==========================================
+function renderizarEstadisticas() {
+    const listaTop = document.getElementById('lista-top-ventas');
+    const graficoContainer = document.getElementById('grafico-categorias');
+    if(!listaTop || !graficoContainer) return; 
 
+    const productosOrdenados = [...inventario].sort((a, b) => (b.compras || 0) - (a.compras || 0));
+    listaTop.innerHTML = '';
+    
+    productosOrdenados.forEach((prod, index) => {
+        const ventas = prod.compras || 0;
+        listaTop.innerHTML += `
+            <li style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee;">
+                <span><strong style="color:var(--color-primario);">#${index + 1}</strong> ${prod.nombre}</span>
+                <span style="background: var(--color-secundario-1); color: white; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight:bold;">${ventas} ventas</span>
+            </li>
+        `;
+    });
+
+    const categoriasData = { "Anillos": 0, "Cadenas": 0, "Pulseras": 0, "Aretes": 0 };
+    let totalVentas = 0;
+    
+    inventario.forEach(prod => {
+        if(categoriasData[prod.categoria] !== undefined) {
+            const c = prod.compras || 0;
+            categoriasData[prod.categoria] += c;
+            totalVentas += c;
+        }
+    });
+
+    graficoContainer.innerHTML = '';
+    if (totalVentas === 0) {
+        graficoContainer.innerHTML = '<p style="color:var(--color-secundario-2);">Aún no hay compras registradas para generar la gráfica.</p>';
+        return;
+    }
+
+    for (const [cat, ventas] of Object.entries(categoriasData)) {
+        const porcentaje = Math.round((ventas / totalVentas) * 100);
+        graficoContainer.innerHTML += `
+            <div style="margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; font-weight:bold; color:var(--color-texto);">
+                    <span>${cat}</span>
+                    <span>${porcentaje}% (${ventas})</span>
+                </div>
+                <div style="width: 100%; background: #e6e2dc; height: 16px; border-radius: 8px; overflow: hidden;">
+                    <div style="width: ${porcentaje}%; background: var(--color-primario); height: 100%; border-radius: 8px;"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ==========================================
+// VENTANAS MODALES INFORMATIVAS Y DETALLES
+// ==========================================
 function abrirInfoModal(seccion) {
     const modal = document.getElementById('info-modal');
     const titulo = document.getElementById('info-modal-title');
@@ -516,10 +634,25 @@ function abrirInfoModal(seccion) {
         titulo.innerText = "Nuestra Visión";
         cuerpo.innerHTML = document.getElementById('contenido-vision').innerHTML;
     }
-
     modal.style.display = 'block';
 }
 
-function cerrarInfoModal() {
-    document.getElementById('info-modal').style.display = 'none';
+function cerrarInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
+
+function abrirDetalles(urlFicha) {
+    document.getElementById('detalles-img').src = urlFicha;
+    document.getElementById('detalles-modal').style.display = 'block';
+}
+
+function cerrarDetalles() {
+    document.getElementById('detalles-modal').style.display = 'none';
+    document.getElementById('detalles-img').src = "";
+}
+
+// Cierra cualquier ventana flotante si tocas fuera de ella
+window.onclick = function(event) {
+    const modalInfo = document.getElementById('info-modal');
+    const modalDetalles = document.getElementById('detalles-modal');
+    if (event.target == modalInfo) { cerrarInfoModal(); }
+    if (event.target == modalDetalles) { cerrarDetalles(); }
 }

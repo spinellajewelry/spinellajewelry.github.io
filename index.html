@@ -177,6 +177,20 @@ La garantía no aplica bajo las siguientes circunstancias:<br>
         </div>
     </div>
 
+    <!-- MODAL DE DETALLES DE LA PRENDA (IMAGEN ESTILIZADA) -->
+    <div id="detalles-modal" class="modal" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);">
+        <div class="modal-content" style="max-width: 500px; padding: 0; background: transparent; border: none; box-shadow: none; margin: 20px auto; text-align: center;">
+            
+            <!-- Botón elegante de Volver -->
+            <button onclick="cerrarDetalles()" style="background: var(--color-claro); color: var(--color-primario); border: none; padding: 10px 25px; border-radius: 30px; font-size: 16px; cursor: pointer; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 10px; font-family: var(--fuente-general); font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s;">
+                <i class="fas fa-arrow-left"></i> Volver a la Tienda
+            </button>
+            
+            <!-- Imagen de Ficha Técnica -->
+            <img id="detalles-img" src="" alt="Características de la prenda" style="width: 100%; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: block;">
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
