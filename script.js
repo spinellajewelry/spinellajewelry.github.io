@@ -55,19 +55,46 @@ function renderizarProductos(productos) {
     if(!grid) return;
     grid.innerHTML = '';
     
-    productos.forEach(prod => {
+    // MEJORA 2: Ordenar para que los agotados vayan al final automáticamente
+    const productosOrdenados = [...productos].sort((a, b) => {
+        if (a.agotado === b.agotado) return 0;
+        return a.agotado ? 1 : -1;
+    });
+    
+    productosOrdenados.forEach(prod => {
         const div = document.createElement('div');
         div.className = 'product-card';
         
+        // Lógica de texto y colores para "Agotado" vs "Pronto en Stock"
+        let textoBotonInactivo = "Agotado";
+        let badgeText = "";
+        let badgeColor = "";
+
+        if (prod.agotado) {
+            if (prod.prontoStock) {
+                badgeText = "PRONTO EN STOCK";
+                badgeColor = "#e67e22"; // Naranja/Dorado
+                textoBotonInactivo = "Pronto en Stock";
+            } else {
+                badgeText = "AGOTADO";
+                badgeColor = "#8c1c13"; // Rojo
+            }
+        }
+
         const btnCarrito = prod.agotado 
-            ? `<button class="btn-add" style="background:#888; cursor:not-allowed;" disabled>Agotado</button>`
+            ? `<button class="btn-add" style="background:#888; cursor:not-allowed;" disabled>${textoBotonInactivo}</button>`
             : `<button class="btn-add" onclick="agregarAlCarrito('${prod.id}')">Agregar a Wishlist</button>`;
             
-        const badgeAgotado = prod.agotado 
-            ? `<div style="position:absolute; top:10px; right:10px; background:#8c1c13; color:white; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:12px; z-index:10; letter-spacing: 1px;">AGOTADO</div>` 
+        const badgeAgotado = badgeText !== "" 
+            ? `<div style="position:absolute; top:10px; right:10px; background:${badgeColor}; color:white; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:12px; z-index:10; letter-spacing: 1px;">${badgeText}</div>` 
             : '';
 
         const imgFicha = prod.imagenFicha ? prod.imagenFicha : prod.imagen;
+
+        // MEJORA 1: Botón de talla arriba del de Wishlist con separación
+        const btnTalla = prod.categoria === 'Anillos' 
+            ? `<button class="btn-talla" onclick="abrirSizeModal()" style="margin-bottom: 15px;">¿No sabes tu talla?</button>` 
+            : '';
 
         div.innerHTML = `
             <div style="position:relative; cursor: zoom-in;" onclick="abrirDetalles('${imgFicha}')" title="Toca para ver características">
@@ -77,8 +104,8 @@ function renderizarProductos(productos) {
             <h3 class="product-title">${prod.nombre}</h3>
             <p class="product-desc">${prod.descripcion}</p>
             <p class="product-price">${formatoCOP(prod.precio)}</p>
+            ${btnTalla}
             ${btnCarrito}
-            ${prod.categoria === 'Anillos' ? `<button class="btn-talla" onclick="abrirSizeModal()">¿No sabes tu talla?</button>` : ''}
         `;
         grid.appendChild(div);
     });
@@ -466,7 +493,6 @@ async function guardarProducto(e) {
         let urlImagen = "";
         let urlFicha = "";
         
-        // Subimos la imagen principal si hay una nueva
         if (archivoImg) {
             const formData = new FormData();
             formData.append('image', archivoImg);
@@ -475,7 +501,6 @@ async function guardarProducto(e) {
             urlImagen = dataImg.data.url;
         }
 
-        // Subimos la imagen de detalles/ficha si se adjuntó
         if (archivoFicha) {
             const formDataFicha = new FormData();
             formDataFicha.append('image', archivoFicha);
@@ -523,8 +548,20 @@ function renderizarTablaAdmin() {
     if(!tbody) return; 
     tbody.innerHTML = '';
     inventario.forEach(prod => {
-        const txtEstado = prod.agotado ? '<span style="color:#8c1c13; font-weight:bold;">Agotado</span>' : '<span style="color:green;">Disponible</span>';
+        // Lógica de texto para la columna ESTADO
+        let txtEstado = '<span style="color:green;">Disponible</span>';
+        if (prod.agotado) {
+            txtEstado = prod.prontoStock 
+                ? '<span style="color:#e67e22; font-weight:bold;">Pronto en Stock</span>' 
+                : '<span style="color:#8c1c13; font-weight:bold;">Agotado</span>';
+        }
+
         const txtBotonAgotado = prod.agotado ? '✅ Stock Activo' : '🚫 Agotar';
+        
+        // MEJORA 3: Botón adicional que SOLO aparece cuando el producto está agotado
+        const botonProntoStock = prod.agotado 
+            ? `<button class="btn-action" style="background:${prod.prontoStock ? '#7f8c8d' : '#f39c12'}; color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="marcarProntoStockBD('${prod.id}', ${prod.prontoStock || false})">${prod.prontoStock ? 'Quitar "Pronto"' : '⏳ Pronto Stock'}</button>` 
+            : '';
 
         tbody.innerHTML += `
             <tr style="${prod.agotado ? 'opacity:0.6;' : ''}">
@@ -533,10 +570,11 @@ function renderizarTablaAdmin() {
                 <td>${prod.categoria}</td>
                 <td>${formatoCOP(prod.precio)}</td>
                 <td>${txtEstado}</td>
-                <td style="display:flex;">
+                <td style="display:flex; flex-wrap: wrap; gap: 5px;">
                     <button class="btn-action" style="background:var(--color-secundario-2); color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="editarProductoBD('${prod.id}')">✏️ Editar</button>
                     <button class="btn-action" style="background:#e67e22; color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="marcarAgotadoBD('${prod.id}', ${prod.agotado || false})">${txtBotonAgotado}</button>
-                    <button class="btn-action btn-delete" style="padding:5px 8px; border-radius:3px;" onclick="eliminarProductoBD('${prod.id}')">🗑️ Eliminar</button>
+                    ${botonProntoStock}
+                    <button class="btn-action btn-delete" style="padding:5px 8px; border-radius:3px;" onclick="eliminarProductoBD('${prod.id}')">🗑️️ Eliminar</button>
                 </td>
             </tr>
         `;
@@ -559,7 +597,19 @@ function editarProductoBD(id) {
 }
 
 function marcarAgotadoBD(id, estadoActual) {
-    db.ref('productos/' + id).update({ agotado: !estadoActual });
+    const nuevoEstado = !estadoActual;
+    const actualizaciones = { agotado: nuevoEstado };
+    
+    // MEJORA 3: Si devolvemos a Stock, apaga automáticamente "Pronto en Stock"
+    if (!nuevoEstado) {
+        actualizaciones.prontoStock = false; 
+    }
+    
+    db.ref('productos/' + id).update(actualizaciones);
+}
+
+function marcarProntoStockBD(id, estadoActual) {
+    db.ref('productos/' + id).update({ prontoStock: !estadoActual });
 }
 
 function eliminarProductoBD(id) {
