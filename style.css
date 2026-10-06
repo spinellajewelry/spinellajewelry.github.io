@@ -484,3 +484,17 @@ a:hover {
     color: var(--color-secundario-1) !important;
     opacity: 1 !important;
 }
+
+/* ==========================================
+   CORRECCIÓN: BOTONES ALINEADOS Y TARJETAS UNIFORMES
+   ========================================== */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Obliga a la tarjeta a estirarse */
+}
+
+.product-card .btn-add {
+    margin-top: auto; /* Empuja mágicamente el botón hacia abajo */
+}
