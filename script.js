@@ -158,7 +158,7 @@ function enviarAWhatsApp() {
     
     mensaje += `%0ATotal estimado: $${total}`;
     
-    const numeroTelefono = "584120000000"; 
+    const numeroTelefono = "573202654167"; 
     const url = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     window.open(url, '_blank');
 
