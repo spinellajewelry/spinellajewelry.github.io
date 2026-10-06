@@ -21,6 +21,14 @@ try {
 let inventario = []; 
 let carrito = []; 
 
+// Función para convertir a Pesos Colombianos mostrando "COP"
+function formatoCOP(valor) {
+    const numeroFormateado = Number(valor).toLocaleString('es-CO', {
+        minimumFractionDigits: 0
+    });
+    return "COP " + numeroFormateado;
+}
+
 window.onload = function() {
     cargarInventario();
 };
@@ -59,10 +67,8 @@ function renderizarProductos(productos) {
             ? `<div style="position:absolute; top:10px; right:10px; background:#8c1c13; color:white; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:12px; z-index:10; letter-spacing: 1px;">AGOTADO</div>` 
             : '';
 
-        // Definimos qué imagen abrir: La ficha técnica, o la normal si no subiste ficha.
         const imgFicha = prod.imagenFicha ? prod.imagenFicha : prod.imagen;
 
-        // La foto ahora tiene 'cursor: zoom-in' y responde al clic para abrir detalles
         div.innerHTML = `
             <div style="position:relative; cursor: zoom-in;" onclick="abrirDetalles('${imgFicha}')" title="Toca para ver características">
                 ${badgeAgotado}
@@ -70,7 +76,7 @@ function renderizarProductos(productos) {
             </div>
             <h3 class="product-title">${prod.nombre}</h3>
             <p class="product-desc">${prod.descripcion}</p>
-            <p class="product-price">$${prod.precio}</p>
+            <p class="product-price">${formatoCOP(prod.precio)}</p>
             ${btnCarrito}
             ${prod.categoria === 'Anillos' ? `<button class="btn-talla" onclick="abrirSizeModal()">¿No sabes tu talla?</button>` : ''}
         `;
@@ -104,7 +110,6 @@ function agregarAlCarrito(id) {
     const producto = inventario.find(p => p.id === id);
     carrito.push(producto);
     document.getElementById('wishlist-count').innerText = carrito.length;
-    alert(`${producto.nombre} agregado a tu colección privada.`);
 }
 
 function abrirWishlist() {
@@ -121,7 +126,7 @@ function abrirWishlist() {
                     <img src="${prod.imagen}" alt="${prod.nombre}">
                     <div>
                         <h4 style="font-family: var(--fuente-general); color: var(--color-primario);">${prod.nombre}</h4>
-                        <p style="color: var(--color-precio); font-weight: bold;">$${prod.precio}</p>
+                        <p style="color: var(--color-precio); font-weight: bold;">${formatoCOP(prod.precio)}</p>
                     </div>
                     <button onclick="eliminarDelCarrito(${index})" style="margin-left:auto; background:none; border:none; color:#8c1c13; cursor:pointer;">X</button>
                 </div>
@@ -145,18 +150,18 @@ function enviarAWhatsApp() {
         return;
     }
     
-    let mensaje = "Hola Spinella, me encantaría adquirir:%0A%0A";
+    let mensaje = "Hola Spinella, me encantaría comprar:%0A%0A";
     let total = 0;
     
     carrito.forEach(prod => {
-        mensaje += `- ${prod.nombre} ($${prod.precio})%0A`;
+        mensaje += `- ${prod.nombre} (${formatoCOP(prod.precio)})%0A`;
         total += Number(prod.precio);
         
         const ventasActuales = prod.compras || 0;
         db.ref('productos/' + prod.id).update({ compras: ventasActuales + 1 });
     });
     
-    mensaje += `%0ATotal estimado: $${total}`;
+    mensaje += `%0ATotal estimado: ${formatoCOP(total)}`;
     
     const numeroTelefono = "573202654167"; 
     const url = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
@@ -367,8 +372,8 @@ function crearPanelAdmin() {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Precio (USD)</label>
-                                    <input type="number" id="prod-precio" step="0.01" required>
+                                    <label>Precio (COP)</label>
+                                    <input type="number" id="prod-precio" step="1" required>
                                 </div>
                                 <div class="form-group">
                                     <label>¿Destacar en Carrusel?</label>
@@ -526,7 +531,7 @@ function renderizarTablaAdmin() {
                 <td><img src="${prod.imagen}" alt="${prod.nombre}" style="width:40px; height:40px; object-fit:cover; border-radius:5px;"></td>
                 <td style="font-family: var(--fuente-general); font-weight: bold;">${prod.nombre}</td>
                 <td>${prod.categoria}</td>
-                <td>$${prod.precio}</td>
+                <td>${formatoCOP(prod.precio)}</td>
                 <td>${txtEstado}</td>
                 <td style="display:flex;">
                     <button class="btn-action" style="background:var(--color-secundario-2); color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="editarProductoBD('${prod.id}')">✏️ Editar</button>

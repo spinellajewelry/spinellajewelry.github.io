@@ -142,20 +142,13 @@
         <div class="modal-content info-modal-lujoso">
             <span class="close-modal close-modal-lujoso" onclick="cerrarInfoModal()">&times;</span>
             
-            <!-- Encabezado decorativo usando tu imagen -->
             <div class="info-modal-header"></div>
             
             <div class="info-modal-text-area">
                 <h2 id="info-modal-title" class="luxury-title">Título</h2>
-                
-                <!-- Área de texto con scroll para mensajes largos -->
-                <div id="info-modal-body" class="info-modal-body-scroll">
-                </div>
+                <div id="info-modal-body" class="info-modal-body-scroll"></div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- TEXTOS OCULTOS (Edita esto con tu información) -->
-            <!-- ========================================== -->
             <div id="contenido-garantia" style="display: none;">
                 <p>En nuestra marca respaldamos la calidad y durabilidad de cada una de nuestras piezas. Nuestra garantía cubre exclusivamente desgaste natural derivado del uso adecuado de la prenda.<br>
 <br>1. Cobertura según el valor del producto<br>
@@ -179,20 +172,15 @@ La garantía no aplica bajo las siguientes circunstancias:<br>
             <div id="contenido-vision" style="display: none;">
                 <p>Ser la marca de referencia para quienes buscan joyería con un diseño impecable y sofisticado, reconocida por transformar la experiencia de adquisición en un símbolo de distinción y exclusividad.</p>
             </div>
-            <!-- ========================================== -->
         </div>
     </div>
 
     <!-- MODAL DE DETALLES DE LA PRENDA (CORREGIDO PARA PC) -->
     <div id="detalles-modal" class="modal" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); overflow-y: auto;">
-        <!-- Se redujo el margen superior a 3vh para subirlo -->
         <div class="modal-content" style="max-width: 450px; padding: 0; background: transparent; border: none; box-shadow: none; margin: 3vh auto; text-align: center;">
-            
             <button onclick="cerrarDetalles()" style="background: var(--color-claro); color: var(--color-primario); border: none; padding: 10px 25px; border-radius: 30px; font-size: 16px; cursor: pointer; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 10px; font-family: var(--fuente-general); font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s;">
                 <i class="fas fa-arrow-left"></i> Volver a la Tienda
             </button>
-            
-            <!-- El 'max-height: 80vh' obliga a la imagen a adaptarse a la pantalla sin tapar la barra de tareas -->
             <img id="detalles-img" src="" alt="Características de la prenda" style="width: 100%; max-height: 80vh; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: block; margin: 0 auto;">
         </div>
     </div>
