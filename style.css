@@ -472,3 +472,15 @@ body {
 .top-ventas-list { list-style: none; padding: 0; margin: 0; }
 .grafico-container { padding: 10px 0; }
 .btn-action { margin-right: 5px; margin-bottom: 5px; font-family: var(--fuente-general); font-size: 13px; }
+
+/* Bloqueo estricto de color azul y subrayado para TODOS los enlaces */
+a, a:link, a:visited, a[href^="tel"], a[href^="mailto"], a:-webkit-any-link {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* Conserva el efecto elegante de cambio de color al tocarlos o pasar el ratón */
+a:hover {
+    color: var(--color-secundario-1) !important;
+    opacity: 1 !important;
+}
