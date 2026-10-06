@@ -55,7 +55,7 @@ function renderizarProductos(productos) {
     if(!grid) return;
     grid.innerHTML = '';
     
-    // MEJORA 2: Ordenar para que los agotados vayan al final automáticamente
+    // Ordenar para que los agotados vayan al final automáticamente
     const productosOrdenados = [...productos].sort((a, b) => {
         if (a.agotado === b.agotado) return 0;
         return a.agotado ? 1 : -1;
@@ -65,7 +65,6 @@ function renderizarProductos(productos) {
         const div = document.createElement('div');
         div.className = 'product-card';
         
-        // Lógica de texto y colores para "Agotado" vs "Pronto en Stock"
         let textoBotonInactivo = "Agotado";
         let badgeText = "";
         let badgeColor = "";
@@ -73,11 +72,11 @@ function renderizarProductos(productos) {
         if (prod.agotado) {
             if (prod.prontoStock) {
                 badgeText = "PRONTO EN STOCK";
-                badgeColor = "#e67e22"; // Naranja/Dorado
+                badgeColor = "#e67e22"; 
                 textoBotonInactivo = "Pronto en Stock";
             } else {
                 badgeText = "AGOTADO";
-                badgeColor = "#8c1c13"; // Rojo
+                badgeColor = "#8c1c13"; 
             }
         }
 
@@ -91,11 +90,12 @@ function renderizarProductos(productos) {
 
         const imgFicha = prod.imagenFicha ? prod.imagenFicha : prod.imagen;
 
-        // MEJORA 1: Botón de talla arriba del de Wishlist con separación
+        // Se agregó un estilo para que el botón de talla tenga un ancho completo y uniforme
         const btnTalla = prod.categoria === 'Anillos' 
-            ? `<button class="btn-talla" onclick="abrirSizeModal()" style="margin-bottom: 15px;">¿No sabes tu talla?</button>` 
+            ? `<button class="btn-talla" onclick="abrirSizeModal()" style="margin-bottom: 15px; width: 100%; display: block; padding: 10px;">¿No sabes tu talla?</button>` 
             : '';
 
+        // CORRECCIÓN: Se envuelven los dos botones en un <div> con margin-top: auto
         div.innerHTML = `
             <div style="position:relative; cursor: zoom-in;" onclick="abrirDetalles('${imgFicha}')" title="Toca para ver características">
                 ${badgeAgotado}
@@ -104,8 +104,11 @@ function renderizarProductos(productos) {
             <h3 class="product-title">${prod.nombre}</h3>
             <p class="product-desc">${prod.descripcion}</p>
             <p class="product-price">${formatoCOP(prod.precio)}</p>
-            ${btnTalla}
-            ${btnCarrito}
+            
+            <div style="margin-top: auto; width: 100%;">
+                ${btnTalla}
+                ${btnCarrito}
+            </div>
         `;
         grid.appendChild(div);
     });
