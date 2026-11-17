@@ -90,22 +90,25 @@ function renderizarProductos(productos) {
 
         const imgFicha = prod.imagenFicha ? prod.imagenFicha : prod.imagen;
 
-        // Se agregó un estilo para que el botón de talla tenga un ancho completo y uniforme
         const btnTalla = prod.categoria === 'Anillos' 
             ? `<button class="btn-talla" onclick="abrirSizeModal()" style="margin-bottom: 15px; width: 100%; display: block; padding: 10px;">¿No sabes tu talla?</button>` 
             : '';
 
-        // CORRECCIÓN: Se envuelven los dos botones en un <div> con margin-top: auto
         div.innerHTML = `
-            <div style="position:relative; cursor: zoom-in;" onclick="abrirDetalles('${imgFicha}')" title="Toca para ver características">
+            <div class="product-img-box" style="position:relative; cursor: zoom-in;" onclick="abrirDetalles('${imgFicha}')" title="Toca para ver características">
                 ${badgeAgotado}
                 <img src="${prod.imagen}" alt="${prod.nombre}" style="${prod.agotado ? 'filter: grayscale(100%); opacity: 0.6;' : ''}">
             </div>
-            <h3 class="product-title">${prod.nombre}</h3>
-            <p class="product-desc">${prod.descripcion}</p>
-            <p class="product-price">${formatoCOP(prod.precio)}</p>
-            
-            <div style="margin-top: auto; width: 100%;">
+            <div class="product-title-box">
+                <h3 class="product-title">${prod.nombre}</h3>
+            </div>
+            <div class="product-desc-box">
+                <p class="product-desc">${prod.descripcion}</p>
+            </div>
+            <div class="product-price-box">
+                <p class="product-price">${formatoCOP(prod.precio)}</p>
+            </div>
+            <div class="product-actions-box">
                 ${btnTalla}
                 ${btnCarrito}
             </div>
