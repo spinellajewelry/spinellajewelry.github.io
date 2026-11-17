@@ -1,3 +1,27 @@
+/* ==========================================
+   CARGA DE TIPOGRAFÍAS PERSONALIZADAS
+   ========================================== */
+@font-face {
+    font-family: 'Crucial';
+    src: url('Crucial.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Futura Custom';
+    src: url('Futura-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Futura Custom';
+    src: url('Futura-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
 :root {
     --color-claro: #FFF0DD;      
     --color-primario: #401117;   
@@ -8,7 +32,8 @@
     --color-texto: #382E27;
     --color-precio: #67343D;
     
-    --fuente-general: 'Crucial', 'Playfair Display', serif; 
+    --fuente-general: 'Crucial', 'Playfair Display', serif;
+    --fuente-futura: 'Futura Custom', 'Jost', sans-serif;
     --fuente-lujo: 'Allura', cursive;
 }
 
@@ -200,9 +225,10 @@ body {
 }
 
 .product-title {
-    font-family: var(--fuente-lujo);
-    font-size: 32px;
-    line-height: 1.2;
+    font-family: 'Crucial', 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 1.25;
     color: var(--color-primario);
     margin: 0;
 }
@@ -217,6 +243,8 @@ body {
 }
 
 .product-desc {
+    font-family: var(--fuente-futura);
+    font-weight: 400;
     font-size: 14px;
     line-height: 1.4;
     color: var(--color-secundario-2);
@@ -232,8 +260,9 @@ body {
 }
 
 .product-price {
-    font-size: 20px;
-    font-weight: bold;
+    font-family: var(--fuente-futura);
+    font-weight: 700;
+    font-size: 19px;
     color: var(--color-precio);
     margin: 0;
 }
@@ -485,7 +514,7 @@ body {
     .product-card { padding: 10px; }
     .product-card img { height: 180px; }
     .product-title-box { height: 58px; }
-    .product-title { font-size: 22px; line-height: 1.2; }
+    .product-title { font-size: 16px; line-height: 1.2; }
     .product-desc-box { height: 40px; }
     .product-desc { font-size: 12px; line-height: 1.3; }
     .product-price-box { height: 28px; margin-bottom: 10px; }
