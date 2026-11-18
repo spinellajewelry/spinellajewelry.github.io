@@ -44,12 +44,34 @@ let lightboxIndice = 0;
 let lightboxZoomActivo = false;
 
 /* =====================================================================
-   2. INICIALIZACIÓN Y SINCRONIZACIÓN DE DATOS
+   2. INICIALIZACIÓN, SCROLL MÓVIL Y SINCRONIZACIÓN DE DATOS
    ===================================================================== */
 window.onload = function() {
     cargarInventario();
     inicializarGestosLightbox();
+    inicializarScrollNavbar();
 };
+
+function inicializarScrollNavbar() {
+    const navbar = document.getElementById('main-navbar');
+    if (!navbar) return;
+
+    const actualizarEstadoNavbar = () => {
+        if (window.innerWidth > 768) {
+            navbar.classList.remove('navbar-scrolled');
+            return;
+        }
+        const scrollActual = window.scrollY || window.pageYOffset;
+        if (scrollActual > 45) {
+            navbar.classList.add('navbar-scrolled');
+        } else if (scrollActual < 15) {
+            navbar.classList.remove('navbar-scrolled');
+        }
+    };
+
+    window.addEventListener('scroll', actualizarEstadoNavbar, { passive: true });
+    window.addEventListener('resize', actualizarEstadoNavbar);
+}
 
 function cargarInventario() {
     if (!db) return;
@@ -644,7 +666,6 @@ function inicializarGestosLightbox() {
     const imgEl = document.getElementById('lightbox-img');
     if (!stage || !imgEl) return;
 
-    // Desplazamiento suave con el mouse cuando el zoom está activo
     stage.addEventListener('mousemove', (e) => {
         if (!lightboxZoomActivo) return;
         const rect = stage.getBoundingClientRect();
@@ -653,7 +674,6 @@ function inicializarGestosLightbox() {
         imgEl.style.transformOrigin = `${xPct}% ${yPct}%`;
     });
 
-    // Desplazamiento táctil en dispositivos móviles cuando el zoom está activo
     stage.addEventListener('touchmove', (e) => {
         if (!lightboxZoomActivo || e.touches.length !== 1) return;
         e.preventDefault();
@@ -698,7 +718,7 @@ window.onclick = function(event) {
 };
 
 /* =====================================================================
-   11. PANEL DE ADMINISTRACIÓN (ACCESO, INVENTARIO Y ESTADÍSTICAS)
+   11. PANEL DE ADMINISTRACIÓN (MODO OSCURO FIJO + FUENTE FUTURA)
    ===================================================================== */
 document.addEventListener('keydown', function(event) {
     if (event.ctrlKey && event.shiftKey && event.key === 'Q') {
@@ -752,9 +772,9 @@ function verificarAdmin() {
 function salirAdmin() {
     document.getElementById('admin-view-container').style.display = 'none';
     document.querySelector('.navbar').style.display = 'flex';
-    document.querySelector('.promotions-carousel').style.display = 'block';
     document.querySelector('.container').style.display = 'block';
     document.querySelector('.footer').style.display = 'block';
+    actualizarCarrusel();
 }
 
 function crearPanelAdmin() {
@@ -770,7 +790,7 @@ function crearPanelAdmin() {
                     <li><button class="active" onclick="cambiarPestana('nuevo-producto', this)">+ Formulario Joya</button></li>
                     <li><button onclick="cambiarPestana('inventario-lista', this)">📦 Ver Inventario</button></li>
                     <li><button onclick="cambiarPestana('estadisticas-avanzadas', this)">📊 Estadísticas</button></li>
-                    <li><button onclick="salirAdmin()" style="color: #FFF0DD; margin-top: 20px;">← Volver a Tienda</button></li>
+                    <li><button class="btn-volver-tienda" onclick="salirAdmin()">← Volver a Tienda</button></li>
                 </ul>
             </aside>
             <main class="dashboard-content">
@@ -811,24 +831,24 @@ function crearPanelAdmin() {
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label>Texto breve para la página principal</label>
                                 <input type="text" id="prod-desc" placeholder="Ej: Brillo y elegancia única" required>
-                                <small style="color: var(--color-secundario-2); margin-top: 4px;">Este texto solo aparece en la tarjeta de la tienda principal.</small>
+                                <small>Este texto solo aparece en la tarjeta de la tienda principal.</small>
                             </div>
 
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label>Ficha Técnica (Especificaciones escritas)</label>
                                 <textarea id="prod-especificaciones" rows="6">${PLANTILLA_FICHA_TECNICA}</textarea>
-                                <small style="color: var(--color-secundario-2); margin-top: 4px;">Usa el formato <strong>Característica: Valor</strong> en cada línea. Las líneas que dejes sin valor no se mostrarán.</small>
+                                <small>Usa el formato <strong>Característica: Valor</strong> en cada línea. Las líneas que dejes sin valor no se mostrarán.</small>
                             </div>
                             
                             <div class="form-grid">
-                                <div class="form-group" style="margin-bottom: 20px;">
+                                <div class="form-group">
                                     <label>Imagen Principal (Página principal y detalles)</label>
                                     <input type="file" id="prod-img" accept="image/*">
                                 </div>
-                                <div class="form-group" style="margin-bottom: 20px;">
+                                <div class="form-group">
                                     <label>Imagen Secundaria (Detalle adicional en modal)</label>
                                     <input type="file" id="prod-img-secundaria" accept="image/*">
-                                    <small style="color: var(--color-secundario-2); margin-top: 5px;">Se mostrará junto a la imagen principal al abrir los detalles.</small>
+                                    <small>Se mostrará junto a la imagen principal al abrir los detalles.</small>
                                 </div>
                             </div>
                             
@@ -853,11 +873,11 @@ function crearPanelAdmin() {
                     <div class="admin-header"><h2>Análisis de Ventas</h2></div>
                     <div class="form-grid">
                         <div class="admin-card">
-                            <h3 style="color: var(--color-primario); margin-bottom: 15px;">Joyas Más Vendidas</h3>
+                            <h3>Joyas Más Vendidas</h3>
                             <ul id="lista-top-ventas" class="top-ventas-list"></ul>
                         </div>
                         <div class="admin-card">
-                            <h3 style="color: var(--color-primario); margin-bottom: 15px;">Demanda por Categoría</h3>
+                            <h3>Demanda por Categoría</h3>
                             <div id="grafico-categorias" class="grafico-container"></div>
                         </div>
                     </div>
@@ -946,30 +966,30 @@ function renderizarTablaAdmin() {
     tbody.innerHTML = '';
 
     inventario.forEach(prod => {
-        let txtEstado = '<span style="color:green;">Disponible</span>';
+        let txtEstado = '<span class="admin-badge-ok">Disponible</span>';
         if (prod.agotado) {
             txtEstado = prod.prontoStock
-                ? '<span style="color:#e67e22; font-weight:bold;">Pronto en Stock</span>'
-                : '<span style="color:#8c1c13; font-weight:bold;">Agotado</span>';
+                ? '<span class="admin-badge-warn">Pronto en Stock</span>'
+                : '<span class="admin-badge-out">Agotado</span>';
         }
 
         const txtBotonAgotado = prod.agotado ? '✅ Stock Activo' : '🚫 Agotar';
         const botonProntoStock = prod.agotado
-            ? `<button class="btn-action" style="background:${prod.prontoStock ? '#7f8c8d' : '#f39c12'}; color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="marcarProntoStockBD('${prod.id}', ${prod.prontoStock || false})">${prod.prontoStock ? 'Quitar "Pronto"' : '⏳ Pronto Stock'}</button>`
+            ? `<button class="btn-action btn-soon" onclick="marcarProntoStockBD('${prod.id}', ${prod.prontoStock || false})">${prod.prontoStock ? 'Quitar "Pronto"' : '⏳ Pronto Stock'}</button>`
             : '';
 
         tbody.innerHTML += `
-            <tr style="${prod.agotado ? 'opacity:0.6;' : ''}">
+            <tr style="${prod.agotado ? 'opacity:0.72;' : ''}">
                 <td><img src="${prod.imagen}" alt="${prod.nombre}"></td>
-                <td style="font-family: var(--fuente-general); font-weight: bold;">${prod.nombre}</td>
+                <td style="font-weight: 700;">${prod.nombre}</td>
                 <td>${prod.categoria}</td>
                 <td>${formatoCOP(prod.precio)}</td>
                 <td>${txtEstado}</td>
-                <td style="display:flex; flex-wrap: wrap; gap: 5px;">
-                    <button class="btn-action" style="background:var(--color-secundario-2); color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="editarProductoBD('${prod.id}')">✏️ Editar</button>
-                    <button class="btn-action" style="background:#e67e22; color:white; border:none; padding:5px 8px; border-radius:3px; cursor:pointer;" onclick="marcarAgotadoBD('${prod.id}', ${prod.agotado || false})">${txtBotonAgotado}</button>
+                <td style="display:flex; flex-wrap: wrap; gap: 6px;">
+                    <button class="btn-action btn-edit" onclick="editarProductoBD('${prod.id}')">✏️ Editar</button>
+                    <button class="btn-action btn-stock" onclick="marcarAgotadoBD('${prod.id}', ${prod.agotado || false})">${txtBotonAgotado}</button>
                     ${botonProntoStock}
-                    <button class="btn-action btn-delete" style="padding:5px 8px; border-radius:3px;" onclick="eliminarProductoBD('${prod.id}')">🗑 Eliminar</button>
+                    <button class="btn-action btn-delete" onclick="eliminarProductoBD('${prod.id}')">🗑 Eliminar</button>
                 </td>
             </tr>
         `;
@@ -1022,9 +1042,9 @@ function renderizarEstadisticas() {
     productosOrdenados.forEach((prod, index) => {
         const ventas = prod.compras || 0;
         listaTop.innerHTML += `
-            <li style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee;">
-                <span><strong style="color:var(--color-primario);">#${index + 1}</strong> ${prod.nombre}</span>
-                <span style="background: var(--color-secundario-1); color: white; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight:bold;">${ventas} ventas</span>
+            <li class="top-ventas-item">
+                <span><strong class="top-ventas-rank">#${index + 1}</strong> ${prod.nombre}</span>
+                <span class="top-ventas-pill">${ventas} ventas</span>
             </li>
         `;
     });
@@ -1042,20 +1062,20 @@ function renderizarEstadisticas() {
 
     graficoContainer.innerHTML = '';
     if (totalVentas === 0) {
-        graficoContainer.innerHTML = '<p style="color:var(--color-secundario-2);">Aún no hay compras registradas para generar la gráfica.</p>';
+        graficoContainer.innerHTML = '<p class="admin-empty-text">Aún no hay compras registradas para generar la gráfica.</p>';
         return;
     }
 
     for (const [cat, ventas] of Object.entries(categoriasData)) {
         const porcentaje = Math.round((ventas / totalVentas) * 100);
         graficoContainer.innerHTML += `
-            <div style="margin-bottom: 18px;">
-                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; font-weight:bold; color:var(--color-texto);">
+            <div class="grafico-row">
+                <div class="grafico-labels">
                     <span>${cat}</span>
                     <span>${porcentaje}% (${ventas})</span>
                 </div>
-                <div style="width: 100%; background: #e6e2dc; height: 16px; border-radius: 8px; overflow: hidden;">
-                    <div style="width: ${porcentaje}%; background: var(--color-primario); height: 100%; border-radius: 8px;"></div>
+                <div class="grafico-track">
+                    <div class="grafico-fill" style="width: ${porcentaje}%;"></div>
                 </div>
             </div>
         `;

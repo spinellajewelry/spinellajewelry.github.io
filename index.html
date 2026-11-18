@@ -22,17 +22,19 @@
     <!-- =====================================================================
          1. BARRA DE NAVEGACIÓN PRINCIPAL
          ===================================================================== -->
-    <nav class="navbar">
-        <div class="logo" onclick="accesoSecretoMovil()">
-            <img src="image_289add.png" alt="Logo Spinella" class="logo-normal">
-            <span>SPINELLA</span>
-        </div>
-        
-        <div class="search-container">
-            <input type="text" id="buscador" placeholder="Buscar joya exclusiva...">
+    <nav class="navbar" id="main-navbar">
+        <div class="navbar-top-row">
+            <div class="logo" onclick="accesoSecretoMovil()">
+                <img src="image_289add.png" alt="Logo Spinella" class="logo-normal">
+                <span>SPINELLA</span>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="buscador" placeholder="Buscar joya exclusiva...">
+            </div>
         </div>
 
-        <div class="filters">
+        <div class="filters" id="navbar-filters">
             <button class="btn-filter active" onclick="filtrarCategoria('Todos', this)">Todas</button>
             <button class="btn-filter" onclick="filtrarCategoria('Anillos', this)">Anillos</button>
             <button class="btn-filter" onclick="filtrarCategoria('Cadenas', this)">Cadenas</button>
@@ -40,8 +42,12 @@
             <button class="btn-filter" onclick="filtrarCategoria('Aretes', this)">Aretes</button>
         </div>
 
-        <div class="wishlist-menu" onclick="abrirWishlist()">
-            🛒 <span id="wishlist-count">0</span>
+        <div class="wishlist-menu" onclick="abrirWishlist()" title="Ver tu colección" aria-label="Ver tu colección">
+            <svg class="bag-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 7h12l1 13H5L6 7z"></path>
+                <path d="M9 7V5a3 3 0 0 1 6 0v2"></path>
+            </svg>
+            <span id="wishlist-count">0</span>
         </div>
     </nav>
 
@@ -143,11 +149,11 @@
 
     <!-- 5.3 Modal Acceso Privado Administrador -->
     <div id="admin-login-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-content admin-login-card">
             <span class="close-modal" onclick="document.getElementById('admin-login-modal').style.display='none'">&times;</span>
             <h2 class="luxury-title">Acceso Privado</h2>
-            <input type="password" id="admin-password" placeholder="Contraseña de acceso" style="width: 100%; padding: 10px; margin: 15px 0;">
-            <button onclick="verificarAdmin()" style="width: 100%; padding: 10px; background-color: var(--color-primario); color: var(--color-claro); border: none;">Entrar</button>
+            <input type="password" id="admin-password" placeholder="Contraseña de acceso">
+            <button onclick="verificarAdmin()" class="btn-admin-login">Entrar</button>
         </div>
     </div>
 
