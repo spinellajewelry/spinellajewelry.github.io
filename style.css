@@ -74,30 +74,25 @@ a:hover {
    ===================================================================== */
 .navbar {
     background-color: var(--color-primario);
-    padding: 14px 45px;
+    padding: 15px 50px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 18px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     position: sticky;
     top: 0;
     z-index: 100;
-    transition: padding 0.25s ease;
 }
 
 .navbar-top-row {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex: 1;
+    display: contents;
 }
 
 .logo {
     font-family: var(--fuente-general);
-    font-size: 27px;
+    font-size: 28px;
     font-weight: bold;
-    letter-spacing: 2.5px;
+    letter-spacing: 3px;
     color: var(--color-claro);
     display: flex;
     align-items: center;
@@ -109,19 +104,18 @@ a:hover {
 }
 
 .logo img {
-    height: 46px;
+    height: 50px;
     width: auto;
     object-fit: contain;
     border-radius: 5px;
 }
 
 .search-container {
-    flex: 1;
-    max-width: 310px;
+    width: 300px;
 }
 
 .search-container input {
-    padding: 9px 18px;
+    padding: 10px 20px;
     border-radius: 25px;
     border: 1px solid var(--color-secundario-1);
     background-color: var(--color-claro);
@@ -139,7 +133,7 @@ a:hover {
 
 .filters {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
 }
 
@@ -147,12 +141,12 @@ a:hover {
     background: transparent;
     color: var(--color-claro);
     border: 1px solid var(--color-secundario-1);
-    padding: 7px 14px;
+    padding: 8px 15px;
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s;
     font-family: var(--fuente-general);
-    font-size: 13.5px;
+    font-size: 14px;
 }
 
 .btn-filter:hover,
@@ -165,11 +159,11 @@ a:hover {
 .wishlist-menu {
     color: var(--color-claro);
     font-family: var(--fuente-futura);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     background: var(--color-secundario-1);
-    padding: 9px 16px;
+    padding: 10px 16px;
     border-radius: 25px;
     border: 1px solid rgba(255, 240, 221, 0.25);
     display: inline-flex;
@@ -1639,8 +1633,8 @@ a:hover {
 
     .search-container {
         margin: 0;
+        width: auto;
         flex: 1;
-        max-width: none;
         min-width: 0;
     }
 
